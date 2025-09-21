@@ -1,0 +1,868 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>石＆天井カウンター：マルチ＋ログ PRO（ログレス＋テンプレ＆入手/消費タブ）</title>
+  <style>
+    :root { --bg:#0f1220; --card:#171a2b; --text:#f2f5ff; --sub:#9aa3b2; --accent:#78a6ff; --danger:#ff6b6b; --ok:#60d394; --muted:#23263a; }
+    *{box-sizing:border-box} body{margin:0;padding:16px;background:linear-gradient(160deg,#0b0e1a,#12162a 50%,#0b0e1a);color:var(--text);
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Hiragino Kaku Gothic ProN","Noto Sans JP", sans-serif;}
+    .wrap{max-width:1200px;margin:0 auto;display:grid;gap:16px}
+    header{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center}
+    h1{font-size:20px;margin:0}
+    .grid{display:grid;grid-template-columns:300px 1fr;gap:16px}
+    @media(max-width:980px){.grid{grid-template-columns:1fr}}
+    .card{background:var(--card);border:1px solid #1f2340;border-radius:14px;padding:16px;box-shadow:0 6px 22px rgba(0,0,0,.25), inset 0 1px 0 rgba(255,255,255,.03)}
+    .title{font-weight:700;margin-bottom:8px}
+    label{font-size:12px;color:var(--sub);display:block;margin:6px 0}
+    input,select,textarea{width:100%;padding:10px 12px;border-radius:10px;border:1px solid #2a2e52;background:#10142a;color:#f2f5ff;outline:none}
+    .row{display:flex;gap:8px;flex-wrap:wrap}
+    .btn{border:1px solid #2a2e52;background:#121636;color:#f2f5ff;padding:10px 12px;border-radius:10px;cursor:pointer;font-weight:600}
+    .btn:hover{background:#1a1f4a}.btn.primary{background:linear-gradient(180deg,#5b86ff,#3461ff);border-color:transparent}
+    .btn.danger{background:linear-gradient(180deg,#ff7b7b,#ff5252);border-color:transparent}
+    .pill{display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border-radius:999px;border:1px solid #2a2e52;background:#0f1330;color:#9aa3b2;font-size:12px}
+    .muted{color:#9aa3b2;font-size:12px}
+    .stat{display:flex;justify-content:space-between;align-items:baseline;padding:8px 0;border-bottom:1px dashed #2a2e52}
+    .stat:last-child{border-bottom:none}.k{color:#9aa3b2;font-size:13px}.v{font-size:20px;font-weight:800;letter-spacing:.3px}
+    .list-item{display:flex;align-items:center;gap:10px;padding:10px;border:1px solid #262a4e;background:#0e1230;border-radius:10px;margin-bottom:8px}
+    .active{outline:2px solid var(--accent)}
+    table{width:100%;border-collapse:collapse} th,td{border-bottom:1px solid #262a4e;padding:8px;text-align:left;font-size:13px} th{color:#aab3c2;font-weight:700}
+    .checklist-item{display:flex;align-items:center;gap:10px;padding:8px 10px;border:1px solid #262a4e;background:#0e1230;border-radius:10px;margin-bottom:8px}
+    .thumb{width:64px;height:64px;object-fit:cover;border-radius:8px;border:1px solid #2a2e52;background:#0b0f2a}
+    .log-row{display:grid;grid-template-columns:72px 1fr auto;gap:10px;align-items:center;padding:8px;border:1px solid #262a4e;border-radius:12px;margin-bottom:8px;background:#0e1230}
+    .tag{display:inline-block;padding:3px 8px;border-radius:999px;border:1px solid #2a2e52;color:#c5cee0;font-size:11px}
+    .lightbox{position:fixed;inset:0;background:rgba(0,0,0,.8);display:none;align-items:center;justify-content:center;z-index:999}
+    .lightbox img{max-width:95vw;max-height:90vh;border-radius:10px;border:1px solid #2a2e52}
+    .grid-2{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}@media(max-width:700px){.grid-2{grid-template-columns:1fr}}
+    .hr{height:1px;background:#23263a;margin:12px 0}.mini{font-size:11px;color:#9aa3b2}
+    .tabs{display:flex;gap:8px;margin:8px 0 12px 0;flex-wrap:wrap}
+    .tab{padding:8px 12px;border:1px solid #2a2e52;border-radius:999px;background:#0f1330;color:#cfe0ff;cursor:pointer;font-size:12px}
+    .tab.active{background:linear-gradient(180deg,#5b86ff,#3461ff);border-color:transparent}
+    .tagbar{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 10px 0}
+    .tagchip{padding:4px 8px;border:1px solid #2a2e52;border-radius:999px;background:#0f1330;color:#cfe0ff;cursor:pointer;font-size:11px}
+    .tagchip.active{background:#2a3ea0}
+    .chip{display:inline-flex;align-items:center;gap:6px;padding:4px 8px;border:1px solid #2a2e52;border-radius:999px;background:#0f1330;color:#cfe0ff;font-size:11px}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>石＆天井カウンター：マルチ＋ログ PRO（ログレス＋テンプレ＆入手/消費タブ）</h1>
+      <span class="pill">入手テンプレ / 今月ショートカット / 消費ログ 追加</span>
+    </header>
+
+    <div class="grid">
+      <!-- 左：ゲーム一覧 -->
+      <div class="card">
+        <div class="title">あなたのゲーム</div>
+        <div id="gameList"></div>
+        <div class="row" style="margin-top:8px">
+          <input id="newGameName" type="text" placeholder="ゲーム名（例：ログレス, 原神）" />
+          <select id="newPreset">
+            <option value="logres" selected>ログレス（pity400, 1連=500, 交換400P）</option>
+            <option value="genshin">原神（pity90, 1連=160）</option>
+            <option value="starrail">スタレ（pity90, 1連=160）</option>
+            <option value="custom">カスタム</option>
+          </select>
+          <button class="btn primary" id="addGame">ゲーム追加</button>
+        </div>
+
+        <div class="title" style="margin-top:14px">全体サマリー</div>
+        <div id="summaryTableWrap"></div>
+
+        <div class="title" style="margin-top:14px">バックアップ</div>
+        <div class="row">
+          <button class="btn" id="exportAll">全データを書き出し</button>
+          <input id="importAllFile" type="file" accept="application/json">
+          <button class="btn" id="importAllBtn">読み込み</button>
+        </div>
+        <div class="mini">※ 画像はJSONに含まれます（容量に注意）。</div>
+      </div>
+
+      <!-- 右：詳細 -->
+      <div class="card">
+        <div class="title">設定・ステータス（<span id="activeGameName">—</span>）</div>
+
+        <!-- セクションタブ -->
+        <div class="tabs">
+          <button class="tab active" data-tab="status">ステータス</button>
+          <button class="tab" data-tab="gacha">ガチャログ</button>
+          <button class="tab" data-tab="income">入手ログ</button>
+          <button class="tab" data-tab="spend">消費ログ</button>
+          <button class="tab" data-tab="analytics">集計</button>
+        </div>
+
+        <!-- ステータス -->
+        <section id="section-status">
+          <div class="row">
+            <div style="flex:1"><label>ゲーム名</label><input id="gameName" type="text"></div>
+            <div style="flex:1"><label>メイン通貨名</label><input id="currencyName" type="text" value="魔晶石"></div>
+            <div style="flex:1"><label>チケット名（任意）</label><input id="ticketName" type="text" value="ガチャチケット"></div>
+            <div style="flex:1"><label>単発に必要な通貨数</label><input id="stonesPerPull" type="number" min="1" value="500"></div>
+          </div>
+          <div class="row">
+            <div style="flex:1"><label>天井を使う</label><select id="pityEnabled"><option value="true" selected>使う</option><option value="false">使わない</option></select></div>
+            <div style="flex:1"><label>天井回数（有効時）</label><input id="pityMax" type="number" min="1" value="400"></div>
+            <div style="flex:1"><label>交換ポイント制</label><select id="exchangeEnabled"><option value="true" selected>使う</option><option value="false">使わない</option></select></div>
+            <div style="flex:1"><label>1連あたりポイント</label><input id="pointsPerPull" type="number" min="0" value="1"></div>
+            <div style="flex:1"><label>交換目標ポイント</label><input id="exchangeTarget" type="number" min="1" value="400"></div>
+          </div>
+          <div class="row">
+            <button class="btn" id="saveConfig">設定を保存</button>
+            <button class="btn" id="duplicateGame">複製</button>
+            <button class="btn danger" id="deleteGame">削除</button>
+          </div>
+          <div class="hr"></div>
+          <div class="row">
+            <div class="card" style="flex:1;min-width:280px">
+              <div class="title">ステータス</div>
+              <div class="stat"><div class="k">所持通貨</div><div class="v" id="stonesV">0</div></div>
+              <div class="stat"><div class="k">所持チケット</div><div class="v" id="ticketsV">0</div></div>
+              <div class="stat"><div class="k">今引ける回数</div><div class="v" id="pullsAffordableV">0 連</div></div>
+              <div class="stat"><div class="k">★5までの残り</div><div class="v" id="pullsToPityV">—</div></div>
+              <div class="stat"><div class="k">天井到達に必要通貨</div><div class="v" id="stonesToPityV">—</div></div>
+              <div class="stat"><div class="k">交換ポイント / 目標</div><div class="v" id="pointsV">—</div></div>
+              <div class="row" style="margin-top:8px">
+                <button class="btn" id="addStone1">+1</button>
+                <button class="btn" id="addStoneUnit">+単発分</button>
+                <button class="btn" id="subStoneUnit">-単発分</button>
+                <button class="btn" id="addTicket1">+1 チケット</button>
+                <button class="btn danger right" id="pull1">+1 連</button>
+                <button class="btn danger" id="pull10">+10 連</button>
+              </div>
+              <div class="row" style="margin-top:8px">
+                <button class="btn primary" id="star5">★5 出た！（天井リセット）</button>
+                <button class="btn" id="resetPoints">交換P リセット</button>
+              </div>
+            </div>
+
+            <div class="card" style="flex:1">
+              <div class="title">石回収チェック（デイリー/イベント）</div>
+              <div id="tasks"></div>
+              <div class="row" style="margin-top:8px">
+                <input id="taskLabel" type="text" placeholder="例：ログインボーナス" />
+                <input id="taskStones" type="number" placeholder="+50" min="1" style="max-width:120px" />
+                <button class="btn" id="addTask">タスク追加</button>
+                <button class="btn" id="resetTasks">チェック外す</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ガチャログ（同等機能は前版継承） -->
+        <section id="section-gacha" style="display:none">
+          <div class="grid-2">
+            <div class="card">
+              <div class="title">ガチャの記録（画像OK）</div>
+              <div class="row">
+                <div style="flex:1"><label>日付</label><input id="logDate" type="date"></div>
+                <div style="flex:1"><label>内容</label><select id="logType"><option value="pull">ガチャ</option><option value="pity">天井到達</option><option value="exchange">交換で入手</option><option value="other">その他</option></select></div>
+                <div style="flex:1"><label>回数（連）</label><input id="logPulls" type="number" min="0" value="10"></div>
+                <div style="flex:1"><label>レア度</label><select id="logRarity"><option value="">—</option><option value="★5">★5</option><option value="★4">★4</option><option value="その他">その他</option></select></div>
+              </div>
+              <div class="row" style="margin-top:8px">
+                <div style="flex:1"><label>バナー名</label><input id="logBanner" type="text"></div>
+                <div style="flex:1"><label>入手対象（キャラ/武器）</label><input id="logItem" type="text"></div>
+              </div>
+              <div class="row" style="margin-top:8px">
+                <div style="flex:2"><label>確率メモ</label><input id="logRate" type="text" placeholder="例：★5=0.6%, ★4=5.1%"></div>
+                <div style="flex:1"><label>スクショ（任意）</label><input id="logImage" type="file" accept="image/*"></div>
+              </div>
+              <div class="row" style="margin-top:8px">
+                <div style="flex:2"><label>タグ（カンマ区切り）</label><input id="logTags" type="text" placeholder="例：限定, 光属性"></div>
+                <img id="preview" class="thumb" alt="" style="display:none">
+                <label class="mini"><input id="applyToCounters" type="checkbox" checked> カウンターに反映（通貨/天井/交換P）</label>
+                <button class="btn primary right" id="addLog">ログ追加</button>
+              </div>
+              <div id="tagTabs" class="tagbar"></div>
+              <div id="logs"></div>
+            </div>
+
+            <div class="card">
+              <div class="title">集計・フィルタ（ガチャ）</div>
+              <div class="row">
+                <div style="flex:1"><label>タイプ</label><select id="fType"><option value="">すべて</option><option value="pull">ガチャ</option><option value="pity">天井</option><option value="exchange">交換</option><option value="other">その他</option></select></div>
+                <div style="flex:1"><label>レア度</label><select id="fRarity"><option value="">すべて</option><option value="★5">★5</option><option value="★4">★4</option></select></div>
+                <div style="flex:1"><label>開始日</label><input id="fFrom" type="date"></div>
+                <div style="flex:1"><label>終了日</label><input id="fTo" type="date"></div>
+              </div>
+              <div class="row" style="margin-top:8px">
+                <div style="flex:2"><label>キーワード（バナー/対象/メモ/タグ）</label><input id="fQuery" type="text"></div>
+                <div style="flex:1"><label>並び順</label><select id="fSort"><option value="new">新しい順</option><option value="old">古い順</option></select></div>
+                <div style="flex:1;display:flex;align-items:flex-end"><button class="btn" id="applyFilter">フィルタ適用</button></div>
+              </div>
+              <div class="hr"></div>
+              <div id="statsBox"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 入手ログ -->
+        <section id="section-income" style="display:none">
+          <div class="grid-2">
+            <div class="card">
+              <div class="title">石の入手を記録（テンプレ＆今月ショートカット対応）</div>
+              <!-- テンプレ選択/管理 -->
+              <div class="row">
+                <div style="flex:1">
+                  <label>入手元テンプレ</label>
+                  <select id="incTemplateSelect"></select>
+                </div>
+                <div style="flex:1">
+                  <label>新しいテンプレを追加</label>
+                  <div class="row">
+                    <input id="incTemplateInput" type="text" placeholder="例：ログインボーナス">
+                    <button class="btn" id="addIncTemplate">追加</button>
+                  </div>
+                </div>
+              </div>
+              <div id="incTemplateChips" class="tagbar"></div>
+
+              <div class="row">
+                <div style="flex:1"><label>日付</label><input id="incDate" type="date"></div>
+                <div style="flex:1"><label>入手元</label><input id="incSource" type="text" placeholder="テンプレ選択で自動入力"></div>
+              </div>
+              <div class="row" style="margin-top:8px">
+                <div style="flex:1"><label>入手した通貨</label><input id="incStones" type="number" min="0" value="0"></div>
+                <div style="flex:1"><label>入手したチケット</label><input id="incTickets" type="number" min="0" value="0"></div>
+              </div>
+              <div class="row" style="margin-top:8px">
+                <div style="flex:2"><label>メモ</label><input id="incNote" type="text" placeholder="例：デイリー全部達成"></div>
+                <div style="flex:1"><label>スクショ（任意）</label><input id="incImage" type="file" accept="image/*"></div>
+              </div>
+              <div class="row" style="margin-top:8px">
+                <div style="flex:2"><label>タグ（カンマ区切り）</label><input id="incTags" type="text" placeholder="例：デイリー, イベント"></div>
+                <label class="mini"><input id="incApply" type="checkbox" checked> カウンターに反映（所持に加算）</label>
+                <button class="btn primary right" id="addIncome">入手を追加</button>
+              </div>
+              <div class="hr"></div>
+              <div class="row">
+                <div style="flex:1"><label>開始日</label><input id="incFrom" type="date"></div>
+                <div style="flex:1"><label>終了日</label><input id="incTo" type="date"></div>
+                <div style="flex:1;display:flex;align-items:flex-end;gap:8px">
+                  <button class="btn" id="btnIncomeThisMonth">今月の入手だけ</button>
+                  <button class="btn" id="btnIncomeClearFilter">フィルタ解除</button>
+                </div>
+              </div>
+
+              <div id="incTagTabs" class="tagbar"></div>
+              <div id="incomeList"></div>
+            </div>
+
+            <div class="card">
+              <div class="title">合計（入手ログ）</div>
+              <div id="incomeStats"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 消費ログ -->
+        <section id="section-spend" style="display:none">
+          <div class="grid-2">
+            <div class="card">
+              <div class="title">石の消費を記録（ガチャ以外の用途）</div>
+              <div class="row">
+                <div style="flex:1"><label>日付</label><input id="spDate" type="date"></div>
+                <div style="flex:1"><label>用途（何で使った？）</label><input id="spPurpose" type="text" placeholder="例：スタミナ回復、クエスト参加、枠拡張"></div>
+              </div>
+              <div class="row" style="margin-top:8px">
+                <div style="flex:1"><label>消費した通貨</label><input id="spStones" type="number" min="0" value="0"></div>
+                <div style="flex:1"><label>消費したチケット</label><input id="spTickets" type="number" min="0" value="0"></div>
+              </div>
+              <div class="row" style="margin-top:8px">
+                <div style="flex:2"><label>メモ</label><input id="spNote" type="text" placeholder="補足メモ"></div>
+                <div style="flex:1"><label>スクショ（任意）</label><input id="spImage" type="file" accept="image/*"></div>
+              </div>
+              <div class="row" style="margin-top:8px">
+                <div style="flex:2"><label>タグ（カンマ区切り）</label><input id="spTags" type="text" placeholder="例：スタミナ, 周回, 育成"></div>
+                <label class="mini"><input id="spApply" type="checkbox" checked> カウンターに反映（所持から減算）</label>
+                <button class="btn primary right" id="addSpend">消費を追加</button>
+              </div>
+              <div class="hr"></div>
+              <div class="row">
+                <div style="flex:1"><label>開始日</label><input id="spFrom" type="date"></div>
+                <div style="flex:1"><label>終了日</label><input id="spTo" type="date"></div>
+                <div style="flex:1;display:flex;align-items:flex-end;gap:8px">
+                  <button class="btn" id="btnSpendThisMonth">今月の消費だけ</button>
+                  <button class="btn" id="btnSpendClearFilter">フィルタ解除</button>
+                </div>
+              </div>
+              <div id="spTagTabs" class="tagbar"></div>
+              <div id="spendList"></div>
+            </div>
+
+            <div class="card">
+              <div class="title">合計（消費ログ）</div>
+              <div id="spendStats"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 集計だけのページ（総合） -->
+        <section id="section-analytics" style="display:none">
+          <div class="card">
+            <div class="title">総合サマリー（ゲーム全体）</div>
+            <div id="overallStats"></div>
+          </div>
+        </section>
+
+      </div>
+    </div>
+
+    <div class="lightbox" id="lightbox"><img id="lightboxImg" alt=""></div>
+    <footer>© 検証用 / ブラウザ保存（localStorage） — 画像は圧縮保存。必要なら定期エクスポート推奨</footer>
+  </div>
+
+  <script>
+    const $ = (id)=>document.getElementById(id);
+    const LS_KEY='pity-multi-log-pro-logres-tabs-v3';
+
+    const presets={
+      logres:{name:'ログレス',cfg:{currencyName:'魔晶石',ticketName:'ガチャチケット',stonesPerPull:500,pityEnabled:true,pityMax:400,exchangeEnabled:true,pointsPerPull:1,exchangeTarget:400}},
+      genshin:{name:'原神',cfg:{currencyName:'原石',ticketName:'紡がれた運命',stonesPerPull:160,pityEnabled:true,pityMax:90,exchangeEnabled:false,pointsPerPull:0,exchangeTarget:200}},
+      starrail:{name:'スターレイル',cfg:{currencyName:'星玉',ticketName:'星軌専用チケット',stonesPerPull:160,pityEnabled:true,pityMax:90,exchangeEnabled:false,pointsPerPull:0,exchangeTarget:300}},
+      custom:{name:'新しいゲーム',cfg:{currencyName:'石',ticketName:'チケット',stonesPerPull:160,pityEnabled:false,pityMax:90,exchangeEnabled:false,pointsPerPull:0,exchangeTarget:200}}
+    };
+
+    const defaultState={games:[mkGame('ログレス',presets.logres.cfg)],activeId:null};
+
+    function mkGame(name,cfg){
+      const id='g'+Math.random().toString(36).slice(2,9);
+      return {
+        id,name:name||'ゲーム',config:{...cfg},
+        state:{
+          stones:0,tickets:0,pullsSinceSSR:0,points:0,
+          tasks:[{id:'t1',label:'ログインボーナス',stones:50,done:false},{id:'t2',label:'デイリー（例）',stones:30,done:false}],
+          logs:[],           // ガチャ系ログ
+          incomeLogs:[],     // 入手ログ
+          spendLogs:[],      // 消費ログ（新）
+          incTemplates:['ログインボーナス','デイリー','ウィークリー','イベント','補填','運営配布']
+        }
+      };
+    }
+
+    let app=loadApp(); if(!app.activeId&&app.games.length) app.activeId=app.games[0].id; saveApp(); renderAll();
+
+    // Storage
+    function loadApp(){try{const raw=localStorage.getItem(LS_KEY); if(!raw) return structuredClone(defaultState); const p=JSON.parse(raw); for(const g of p.games){g.state.logs=g.state.logs||[]; g.state.incomeLogs=g.state.incomeLogs||[]; g.state.spendLogs=g.state.spendLogs||[]; g.state.incTemplates=g.state.incTemplates||['ログインボーナス','デイリー','ウィークリー','イベント','補填','運営配布']; } return p;}catch(e){return structuredClone(defaultState);}}
+    function saveApp(){localStorage.setItem(LS_KEY,JSON.stringify(app))}
+    function activeGame(){return app.games.find(g=>g.id===app.activeId)||null}
+
+    // Tabs
+    for(const btn of document.querySelectorAll('.tab')){
+      btn.addEventListener('click',()=>{
+        for(const b of document.querySelectorAll('.tab')) b.classList.remove('active');
+        btn.classList.add('active');
+        const t=btn.dataset.tab;
+        for(const sec of ['status','gacha','income','spend','analytics']){
+          document.getElementById('section-'+sec).style.display = (sec===t)?'block':'none';
+        }
+      });
+    }
+
+    function renderAll(){renderList(); renderSummary(); renderRight();}
+
+    function renderList(){
+      const wrap=$('gameList'); wrap.innerHTML='';
+      for(const g of app.games){
+        const row=document.createElement('div'); row.className='list-item'+(g.id===app.activeId?' active':'');
+        const btn=document.createElement('button'); btn.className='btn'; btn.textContent='開く';
+        btn.addEventListener('click',()=>{app.activeId=g.id; saveApp(); renderAll();});
+        const name=document.createElement('div'); name.style.flex='1'; name.innerHTML=`<strong>${g.name}</strong>`;
+        const stones=document.createElement('div'); stones.className='muted'; stones.textContent=`所持: ${g.state.stones}`;
+        row.appendChild(btn); row.appendChild(name); row.appendChild(stones); wrap.appendChild(row);
+      }
+    }
+
+    function renderSummary(){
+      const wrap=$('summaryTableWrap'); wrap.innerHTML='';
+      if(!app.games.length){ wrap.innerHTML='<div class="muted">まだゲームがありません</div>'; return; }
+      let html='<table><thead><tr><th>ゲーム</th><th>所持通貨</th><th>チケット</th><th>今引ける</th><th>pity残り</th></tr></thead><tbody>';
+      for(const g of app.games){
+        const cfg=g.config, st=g.state;
+        const pullsAffordable=Math.floor(st.tickets + (st.stones/cfg.stonesPerPull));
+        const pityRemaining=cfg.pityEnabled?Math.max(0,cfg.pityMax - st.pullsSinceSSR):'—';
+        html+=`<tr><td>${g.name}</td><td>${st.stones}</td><td>${st.tickets}</td><td>${pullsAffordable} 連</td><td>${pityRemaining}</td></tr>`;
+      }
+      html+='</tbody></table>'; wrap.innerHTML=html;
+    }
+
+    function renderRight(){
+      const g=activeGame();
+      $('activeGameName').textContent=g?g.name:'—';
+      const ids=['gameName','currencyName','ticketName','stonesPerPull','pityEnabled','pityMax','exchangeEnabled','pointsPerPull','exchangeTarget','stonesV','ticketsV','pullsAffordableV','pullsToPityV','stonesToPityV','pointsV','addStone1','addStoneUnit','subStoneUnit','addTicket1','pull1','pull10','star5','resetPoints','tasks','taskLabel','taskStones','addTask','resetTasks','logDate','logType','logPulls','logRarity','logNote','logImage','logBanner','logItem','logRate','logTags','applyToCounters','addLog','logs','exportGame','importGameFile','importGameBtn','incDate','incSource','incStones','incTickets','incNote','incImage','incTags','incApply','addIncome','incomeList','incomeStats','incTemplateSelect','incTemplateInput','addIncTemplate','incTemplateChips','incFrom','incTo','btnIncomeThisMonth','btnIncomeClearFilter','spDate','spPurpose','spStones','spTickets','spNote','spImage','spTags','spApply','addSpend','spFrom','spTo','btnSpendThisMonth','btnSpendClearFilter','spendList','spendStats'];
+      for(const id of ids){const el=$(id); if(el) el.disabled=!g;}
+      if(!g) return;
+      // Config fill
+      $('gameName').value=g.name;
+      $('currencyName').value=g.config.currencyName || '魔晶石';
+      $('ticketName').value=g.config.ticketName || 'ガチャチケット';
+      $('stonesPerPull').value=g.config.stonesPerPull;
+      $('pityEnabled').value=g.config.pityEnabled?'true':'false';
+      $('pityMax').value=g.config.pityMax;
+      $('exchangeEnabled').value=g.config.exchangeEnabled?'true':'false';
+      $('pointsPerPull').value=g.config.pointsPerPull;
+      $('exchangeTarget').value=g.config.exchangeTarget;
+      // Stats
+      $('stonesV').textContent=g.state.stones; $('ticketsV').textContent=g.state.tickets;
+      const pullsAffordable=Math.floor(g.state.tickets + (g.state.stones/g.config.stonesPerPull));
+      $('pullsAffordableV').textContent=pullsAffordable+' 連';
+      if(g.config.pityEnabled){
+        const pullsToPity=Math.max(0,g.config.pityMax - g.state.pullsSinceSSR);
+        $('pullsToPityV').textContent=pullsToPity+' 回';
+        const stonesNeeded=Math.max(0,(pullsToPity - g.state.tickets))*g.config.stonesPerPull;
+        $('stonesToPityV').textContent=stonesNeeded;
+      }else{$('pullsToPityV').textContent='—'; $('stonesToPityV').textContent='—';}
+      if(g.config.exchangeEnabled){$('pointsV').textContent=`${g.state.points} / ${g.config.exchangeTarget}（+${g.config.pointsPerPull}/連）`;} else {$('pointsV').textContent='—';}
+
+      renderTasks(g);
+      const today=new Date().toISOString().slice(0,10);
+      if(!$('logDate').value) $('logDate').value=today;
+      if(!$('incDate').value) $('incDate').value=today;
+      if(!$('spDate').value) $('spDate').value=today;
+
+      // テンプレUI
+      renderIncTemplates(g);
+
+      // logs
+      renderGachaLogsAndStats(g);
+      renderIncomeLogs(g);
+      renderSpendLogs(g);
+      renderOverall(g);
+    }
+
+    // Save config
+    $('saveConfig').addEventListener('click',()=>{
+      const g=activeGame(); if(!g) return;
+      g.name=$('gameName').value.trim()||g.name;
+      g.config.currencyName=$('currencyName').value.trim()||'魔晶石';
+      g.config.ticketName=$('ticketName').value.trim();
+      g.config.stonesPerPull=Math.max(1,parseInt($('stonesPerPull').value||'500',10));
+      g.config.pityEnabled=$('pityEnabled').value==='true';
+      g.config.pityMax=Math.max(1,parseInt($('pityMax').value||'400',10));
+      g.config.exchangeEnabled=$('exchangeEnabled').value==='true';
+      g.config.pointsPerPull=Math.max(0,parseInt($('pointsPerPull').value||'1',10));
+      g.config.exchangeTarget=Math.max(1,parseInt($('exchangeTarget').value||'400',10));
+      saveApp(); renderAll();
+    });
+    $('duplicateGame').addEventListener('click',()=>{const g=activeGame(); if(!g) return; const copy=mkGame(g.name+'（複製）',g.config); copy.state=JSON.parse(JSON.stringify(g.state)); app.games.push(copy); app.activeId=copy.id; saveApp(); renderAll();});
+    $('deleteGame').addEventListener('click',()=>{const g=activeGame(); if(!g) return; if(!confirm(`${g.name} を削除しますか？`)) return; app.games=app.games.filter(x=>x.id!==g.id); app.activeId=app.games.length?app.games[0].id:null; saveApp(); renderAll();});
+
+    // Buttons
+    function doPull(g,n){
+      let left=n;
+      if((g.config.ticketName||'').trim().length){
+        const use=Math.min(g.state.tickets,left); g.state.tickets-=use; left-=use;
+      }
+      if(left>0){
+        const need=left*g.config.stonesPerPull;
+        if(g.state.stones<need){alert('通貨が足りません'); return false;}
+        g.state.stones-=need;
+      }
+      g.state.pullsSinceSSR+=n;
+      if(g.config.exchangeEnabled){g.state.points+=n*g.config.pointsPerPull;}
+      return true;
+    }
+    $('addStone1').addEventListener('click',()=>{const g=activeGame(); if(!g) return; g.state.stones+=1; saveApp(); renderAll();});
+    $('addStoneUnit').addEventListener('click',()=>{const g=activeGame(); if(!g) return; g.state.stones+=g.config.stonesPerPull; saveApp(); renderAll();});
+    $('subStoneUnit').addEventListener('click',()=>{const g=activeGame(); if(!g) return; g.state.stones=Math.max(0,g.state.stones - g.config.stonesPerPull); saveApp(); renderAll();});
+    $('addTicket1').addEventListener('click',()=>{const g=activeGame(); if(!g) return; g.state.tickets+=1; saveApp(); renderAll();});
+    $('pull1').addEventListener('click',()=>{const g=activeGame(); if(!g) return; if(doPull(g,1)!==false){saveApp(); renderAll();}});
+    $('pull10').addEventListener('click',()=>{const g=activeGame(); if(!g) return; if(doPull(g,10)!==false){saveApp(); renderAll();}});
+    $('star5').addEventListener('click',()=>{const g=activeGame(); if(!g) return; g.state.pullsSinceSSR=0; saveApp(); renderAll();});
+    $('resetPoints').addEventListener('click',()=>{const g=activeGame(); if(!g) return; g.state.points=0; saveApp(); renderAll();});
+
+    // Tasks
+    function renderTasks(g){
+      const wrap=$('tasks'); wrap.innerHTML='';
+      for(const t of g.state.tasks){
+        const row=document.createElement('div'); row.className='checklist-item';
+        const cb=document.createElement('input'); cb.type='checkbox'; cb.checked=t.done;
+        cb.addEventListener('change',()=>{
+          if(cb.checked){ g.state.stones += Number(t.stones); t.done=true; }
+          else { g.state.stones = Math.max(0, g.state.stones - Number(t.stones)); t.done=false; }
+          saveApp(); renderAll();
+        });
+        const label=document.createElement('div'); label.innerHTML=`<strong>${t.label}</strong> <span class="muted">+${t.stones}</span>`;
+        const del=document.createElement('button'); del.className='btn'; del.textContent='削除';
+        del.addEventListener('click',()=>{
+          if(t.done){ g.state.stones = Math.max(0, g.state.stones - Number(t.stones)); }
+          g.state.tasks = g.state.tasks.filter(x=>x.id!==t.id); saveApp(); renderAll();
+        });
+        row.appendChild(cb); row.appendChild(label); row.appendChild(del); wrap.appendChild(row);
+      }
+    }
+    $('addTask').addEventListener('click',()=>{
+      const g=activeGame(); if(!g) return;
+      const label=$('taskLabel').value.trim();
+      const stones=parseInt(($('taskStones').value||'').trim(),10);
+      if(!label||!stones||stones<=0){alert('タスク名と数を入力'); return;}
+      const id='t'+Math.random().toString(36).slice(2,9);
+      g.state.tasks.push({id,label,stones,done:false});
+      $('taskLabel').value=''; $('taskStones').value='';
+      saveApp(); renderAll();
+    });
+    $('resetTasks').addEventListener('click',()=>{
+      const g=activeGame(); if(!g) return;
+      for(const t of g.state.tasks){ if(t.done){ g.state.stones=Math.max(0,g.state.stones-Number(t.stones)); t.done=false; } }
+      saveApp(); renderAll();
+    });
+
+    // --- Helpers ---
+    function escapeHtml(s){return s?s.replace(/[&<>\"']/g,m=>({"&":"&amp;","<":"&lt;","&gt;":">","\"":"&quot;","'":"&#039;"}[m])):''}
+    function collectTags(logs){const set=new Set(); for(const L of logs){(L.tags||[]).forEach(t=>set.add(t));} return Array.from(set).sort();}
+    function renderTagTabs(el, logs, currentTag, onClick){
+      el.innerHTML='';
+      const tags=collectTags(logs);
+      if(!tags.length){ el.innerHTML='<span class="mini">（タグなし）</span>'; return; }
+      const all=document.createElement('span'); all.className='tagchip'+(currentTag?'':' active'); all.textContent='すべて';
+      all.addEventListener('click',()=>onClick(''));
+      el.appendChild(all);
+      for(const t of tags){
+        const chip=document.createElement('span'); chip.className='tagchip'+(currentTag===t?' active':''); chip.textContent=t;
+        chip.addEventListener('click',()=>onClick(t));
+        el.appendChild(chip);
+      }
+    }
+    function inDateRange(dateStr, from, to){
+      if(!from && !to) return true;
+      const d=new Date(dateStr); d.setHours(0,0,0,0);
+      if(from && d < new Date(from)) return false;
+      if(to && d > new Date(to)) return false;
+      return true;
+    }
+
+    // --- Gacha logs (unchanged core) ---
+    function matchesFilter(L, f){
+      const inType = !f.type || L.type===f.type;
+      const inRarity = !f.rarity || L.rarity===f.rarity;
+      const d = new Date(L.date); d.setHours(0,0,0,0);
+      const fromOk = !f.from || d >= new Date(f.from);
+      const toOk   = !f.to   || d <= new Date(f.to);
+      const q=(f.q||'').toLowerCase();
+      const inText = !q || ((L.banner||'').toLowerCase().includes(q) || (L.item||'').toLowerCase().includes(q) || (L.note||'').toLowerCase().includes(q) || (L.tags||[]).some(t=>t.toLowerCase().includes(q)));
+      const inTag = !f.tag || (L.tags||[]).includes(f.tag);
+      return inType && inRarity && fromOk && toOk && inText && inTag;
+    }
+    function renderGachaLogsAndStats(g){
+      const f={ type:$('fType').value, rarity:$('fRarity').value, from:$('fFrom').value||null, to:$('fTo').value||null, q:$('fQuery').value.trim(), tag: renderGachaLogsAndStats.currentTag || '' };
+      let logs=g.state.logs.slice().filter(L=>matchesFilter(L,f));
+      logs.sort((a,b)=> $('fSort').value==='old' ? (a.date>b.date?1:-1) : (a.date<b.date?1:-1));
+      let totalPulls=0, fiveCount=0, pityHits=0;
+      for(const L of logs){ if(L.type==='pull') totalPulls+=(L.pulls||0); if(L.rarity==='★5') fiveCount++; if(L.type==='pity') pityHits++; }
+      const rate=totalPulls>0?(fiveCount/totalPulls*100).toFixed(2):'—';
+      $('statsBox').innerHTML=`
+        <div class="stat"><div class="k">対象ログの合計連数</div><div class="v">${totalPulls} 連</div></div>
+        <div class="stat"><div class="k">★5の個数</div><div class="v">${fiveCount}</div></div>
+        <div class="stat"><div class="k">観測★5率</div><div class="v">${rate}%</div></div>
+        <div class="stat"><div class="k">天井到達の回数</div><div class="v">${pityHits}</div></div>`;
+      renderTagTabs($('tagTabs'), g.state.logs, f.tag, (t)=>{ renderGachaLogsAndStats.currentTag=t; saveApp(); renderGachaLogsAndStats(g); });
+      const box=$('logs'); box.innerHTML='';
+      if(!logs.length){ box.innerHTML='<div class="muted">（該当ログなし）</div>'; return; }
+      for(const L of logs){
+        const row=document.createElement('div'); row.className='log-row';
+        const img=document.createElement('img'); img.className='thumb'; img.alt=''; if(L.img){img.src=L.img; img.addEventListener('click',()=>showLightbox(L.img));}
+        const tags=[`<span class="tag">${L.type}</span>`]; if(L.rarity) tags.push(`<span class="tag">${L.rarity}</span>`); if(L.banner) tags.push(`<span class="tag">banner:${escapeHtml(L.banner)}</span>`);
+        (L.tags||[]).forEach(t=>tags.push(`<span class="tag">#${escapeHtml(t)}</span>`));
+        const pullsTxt=L.pulls?` / ${L.pulls}連`:''; const itemTxt=L.item?` / ${escapeHtml(L.item)}`:''; const rateTxt=L.rate?` / ${escapeHtml(L.rate)}`:'';
+        const mid=document.createElement('div');
+        mid.innerHTML=`<div><strong>${L.date}</strong> ${pullsTxt} ${tags.join(' ')}${itemTxt}${rateTxt}</div><div class="muted">${escapeHtml(L.note||'')}</div>`;
+        const right=document.createElement('div'); right.style.display='flex'; right.style.gap='8px';
+        const del=document.createElement('button'); del.className='btn'; del.textContent='削除';
+        del.addEventListener('click',()=>{ g.state.logs=g.state.logs.filter(x=>x.id!==L.id); saveApp(); renderAll(); });
+        right.appendChild(del);
+        row.appendChild(img); row.appendChild(mid); row.appendChild(right); box.appendChild(row);
+      }
+    }
+    $('applyFilter').addEventListener('click',()=>{ saveApp(); renderAll(); });
+    $('logImage').addEventListener('change', async (e)=>{
+      const file=e.target.files&&e.target.files[0]; if(!file) return;
+      const dataUrl=await readAndCompressImage(file, 900, 0.82);
+      const prev=$('preview'); prev.src=dataUrl; prev.style.display='inline-block';
+    });
+    $('addLog').addEventListener('click', async ()=>{
+      const g=activeGame(); if(!g) return;
+      const date=$('logDate').value || new Date().toISOString().slice(0,10);
+      const type=$('logType').value;
+      const pulls=parseInt(($('logPulls').value||'0'),10)||0;
+      const rarity=$('logRarity').value;
+      const note=$('logNote').value.trim();
+      const banner=$('logBanner').value.trim();
+      const item=$('logItem').value.trim();
+      const rate=$('logRate').value.trim();
+      const tags=($('logTags').value||'').split(',').map(s=>s.trim()).filter(Boolean);
+      const apply=$('applyToCounters').checked;
+      let imgData=''; const file=$('logImage').files && $('logImage').files[0];
+      if(file) imgData=await readAndCompressImage(file, 1100, 0.85);
+      const L={ id:'L'+Math.random().toString(36).slice(2,9), date, type, pulls, rarity, note, img:imgData, banner, item, rate, tags };
+      g.state.logs.unshift(L);
+      if(apply){
+        if(type==='pull' && pulls>0){ doPull(g, pulls); }
+        if(type==='pity' && g.config.pityEnabled){ g.state.pullsSinceSSR=0; }
+        if(rarity==='★5'){ g.state.pullsSinceSSR=0; }
+      }
+      $('logPulls').value='10'; $('logRarity').value=''; $('logNote').value=''; $('logBanner').value=''; $('logItem').value=''; $('logRate').value=''; $('logTags').value=''; $('logImage').value='';
+      const prev=$('preview'); prev.src=''; prev.style.display='none';
+      saveApp(); renderAll();
+    });
+
+    // --- Income templates & logs ---
+    function renderIncTemplates(g){
+      const sel=$('incTemplateSelect'); const chips=$('incTemplateChips');
+      sel.innerHTML='';
+      for(const t of g.state.incTemplates){
+        const opt=document.createElement('option'); opt.value=t; opt.textContent=t; sel.appendChild(opt);
+      }
+      sel.onchange = ()=>{ $('incSource').value=sel.value || ''; };
+      // chips with remove buttons
+      chips.innerHTML='';
+      for(const t of g.state.incTemplates){
+        const chip=document.createElement('span'); chip.className='chip'; chip.innerHTML=`${t} <button class="btn" style="padding:2px 6px">×</button>`;
+        const btn=chip.querySelector('button');
+        btn.addEventListener('click',()=>{
+          if(!confirm(`テンプレ「${t}」を削除しますか？`)) return;
+          g.state.incTemplates=g.state.incTemplates.filter(x=>x!==t);
+          saveApp(); renderIncTemplates(g);
+        });
+        chip.addEventListener('click', (e)=>{ if(e.target.tagName!=='BUTTON'){ $('incSource').value=t; } });
+        chips.appendChild(chip);
+      }
+      // add button handler
+      $('addIncTemplate').onclick = ()=>{
+        const v=($('incTemplateInput').value||'').trim();
+        if(!v) return;
+        if(!g.state.incTemplates.includes(v)){ g.state.incTemplates.push(v); }
+        $('incTemplateInput').value='';
+        saveApp(); renderIncTemplates(g);
+      };
+    }
+
+    $('addIncome').addEventListener('click', async ()=>{
+      const g=activeGame(); if(!g) return;
+      const date=$('incDate').value || new Date().toISOString().slice(0,10);
+      const source=$('incSource').value.trim();
+      const stones=parseInt(($('incStones').value||'0'),10)||0;
+      const tickets=parseInt(($('incTickets').value||'0'),10)||0;
+      const note=$('incNote').value.trim();
+      const tags=($('incTags').value||'').split(',').map(s=>s.trim()).filter(Boolean);
+      const apply=$('incApply').checked;
+      let imgData=''; const file=$('incImage').files && $('incImage').files[0];
+      if(file) imgData=await readAndCompressImage(file, 1100, 0.85);
+      const L={ id:'I'+Math.random().toString(36).slice(2,9), date, source, stones, tickets, note, img:imgData, tags };
+      g.state.incomeLogs.unshift(L);
+      if(apply){ g.state.stones += stones; g.state.tickets += tickets; }
+      $('incSource').value=''; $('incStones').value='0'; $('incTickets').value='0'; $('incNote').value=''; $('incTags').value=''; $('incImage').value='';
+      saveApp(); renderAll();
+    });
+
+    function renderIncomeLogs(g){
+      const box=$('incomeList'); box.innerHTML='';
+      renderTagTabs($('incTagTabs'), g.state.incomeLogs, renderIncomeLogs.currentTag || '', (t)=>{ renderIncomeLogs.currentTag=t; saveApp(); renderIncomeLogs(g); renderIncomeStats(g); });
+      let logs = g.state.incomeLogs.slice();
+      const from=$('incFrom').value || null;
+      const to=$('incTo').value || null;
+      if(renderIncomeLogs.currentTag){ logs = logs.filter(L=> (L.tags||[]).includes(renderIncomeLogs.currentTag)); }
+      logs = logs.filter(L=> inDateRange(L.date, from, to));
+      if(!logs.length){ box.innerHTML='<div class="muted">（入手ログなし）</div>'; renderIncomeStats(g); return; }
+      for(const L of logs){
+        const row=document.createElement('div'); row.className='log-row';
+        const img=document.createElement('img'); img.className='thumb'; if(L.img){img.src=L.img; img.addEventListener('click',()=>showLightbox(L.img));}
+        const tags=[`<span class="tag">入手</span>`]; (L.tags||[]).forEach(t=>tags.push(`<span class="tag">#${escapeHtml(t)}</span>`));
+        const mid=document.createElement('div');
+        mid.innerHTML=`<div><strong>${L.date}</strong> / ${escapeHtml(L.source||'')} ${tags.join(' ')}</div>
+                       <div class="muted">+${L.stones||0}通貨 / +${L.tickets||0}チケット　${escapeHtml(L.note||'')}</div>`;
+        const right=document.createElement('div'); right.style.display='flex'; right.style.gap='8px';
+        const del=document.createElement('button'); del.className='btn'; del.textContent='削除';
+        del.addEventListener('click',()=>{ g.state.incomeLogs=g.state.incomeLogs.filter(x=>x.id!==L.id); saveApp(); renderAll(); });
+        right.appendChild(del);
+        row.appendChild(img); row.appendChild(mid); row.appendChild(right); box.appendChild(row);
+      }
+      renderIncomeStats(g);
+    }
+    function renderIncomeStats(g){
+      const box=$('incomeStats');
+      const from=$('incFrom').value || null;
+      const to=$('incTo').value || null;
+      let logs=g.state.incomeLogs.slice();
+      if(renderIncomeLogs.currentTag){ logs = logs.filter(L=> (L.tags||[]).includes(renderIncomeLogs.currentTag)); }
+      logs = logs.filter(L=> inDateRange(L.date, from, to));
+      let stones=0,tickets=0;
+      for(const L of logs){ stones+=(L.stones||0); tickets+=(L.tickets||0); }
+      box.innerHTML=`
+        <div class="stat"><div class="k">入手した通貨 合計</div><div class="v">+${stones}</div></div>
+        <div class="stat"><div class="k">入手したチケット 合計</div><div class="v">+${tickets}</div></div>
+        <div class="mini">※ タグや期間で絞り込まれた合計です</div>`;
+    }
+    $('btnIncomeThisMonth').addEventListener('click', ()=>{
+      const now=new Date(); const y=now.getFullYear(), m=now.getMonth();
+      const first = new Date(y, m, 1); const last  = new Date(y, m+1, 0);
+      $('incFrom').value = first.toISOString().slice(0,10);
+      $('incTo').value   = last.toISOString().slice(0,10);
+      renderAll();
+    });
+    $('btnIncomeClearFilter').addEventListener('click', ()=>{
+      $('incFrom').value=''; $('incTo').value=''; renderAll();
+    });
+
+    // --- Spend logs ---
+    $('addSpend').addEventListener('click', async ()=>{
+      const g=activeGame(); if(!g) return;
+      const date=$('spDate').value || new Date().toISOString().slice(0,10);
+      const purpose=$('spPurpose').value.trim();
+      const stones=parseInt(($('spStones').value||'0'),10)||0;
+      const tickets=parseInt(($('spTickets').value||'0'),10)||0;
+      const note=$('spNote').value.trim();
+      const tags=($('spTags').value||'').split(',').map(s=>s.trim()).filter(Boolean);
+      const apply=$('spApply').checked;
+      let imgData=''; const file=$('spImage').files && $('spImage').files[0];
+      if(file) imgData=await readAndCompressImage(file, 1100, 0.85);
+      const L={ id:'S'+Math.random().toString(36).slice(2,9), date, purpose, stones, tickets, note, img:imgData, tags };
+      g.state.spendLogs.unshift(L);
+      if(apply){
+        g.state.stones = Math.max(0, g.state.stones - stones);
+        g.state.tickets = Math.max(0, g.state.tickets - tickets);
+      }
+      $('spPurpose').value=''; $('spStones').value='0'; $('spTickets').value='0'; $('spNote').value=''; $('spTags').value=''; $('spImage').value='';
+      saveApp(); renderAll();
+    });
+
+    function renderSpendLogs(g){
+      const box=$('spendList'); box.innerHTML='';
+      renderTagTabs($('spTagTabs'), g.state.spendLogs, renderSpendLogs.currentTag || '', (t)=>{ renderSpendLogs.currentTag=t; saveApp(); renderSpendLogs(g); renderSpendStats(g); });
+      let logs = g.state.spendLogs.slice();
+      const from=$('spFrom').value || null;
+      const to=$('spTo').value || null;
+      if(renderSpendLogs.currentTag){ logs = logs.filter(L=> (L.tags||[]).includes(renderSpendLogs.currentTag)); }
+      logs = logs.filter(L=> inDateRange(L.date, from, to));
+      if(!logs.length){ box.innerHTML='<div class="muted">（消費ログなし）</div>'; renderSpendStats(g); return; }
+      for(const L of logs){
+        const row=document.createElement('div'); row.className='log-row';
+        const img=document.createElement('img'); img.className='thumb'; if(L.img){img.src=L.img; img.addEventListener('click',()=>showLightbox(L.img));}
+        const tags=[`<span class="tag">消費</span>`]; (L.tags||[]).forEach(t=>tags.push(`<span class="tag">#${escapeHtml(t)}</span>`));
+        const mid=document.createElement('div');
+        mid.innerHTML=`<div><strong>${L.date}</strong> / ${escapeHtml(L.purpose||'')} ${tags.join(' ')}</div>
+                       <div class="muted">-${L.stones||0}通貨 / -${L.tickets||0}チケット　${escapeHtml(L.note||'')}</div>`;
+        const right=document.createElement('div'); right.style.display='flex'; right.style.gap='8px';
+        const del=document.createElement('button'); del.className='btn'; del.textContent='削除';
+        del.addEventListener('click',()=>{ g.state.spendLogs=g.state.spendLogs.filter(x=>x.id!==L.id); saveApp(); renderAll(); });
+        right.appendChild(del);
+        row.appendChild(img); row.appendChild(mid); row.appendChild(right); box.appendChild(row);
+      }
+      renderSpendStats(g);
+    }
+
+    function renderSpendStats(g){
+      const box=$('spendStats');
+      const from=$('spFrom').value || null;
+      const to=$('spTo').value || null;
+      let logs=g.state.spendLogs.slice();
+      if(renderSpendLogs.currentTag){ logs = logs.filter(L=> (L.tags||[]).includes(renderSpendLogs.currentTag)); }
+      logs = logs.filter(L=> inDateRange(L.date, from, to));
+      let stones=0,tickets=0;
+      for(const L of logs){ stones+=(L.stones||0); tickets+=(L.tickets||0); }
+      box.innerHTML=`
+        <div class="stat"><div class="k">消費した通貨 合計</div><div class="v">-${stones}</div></div>
+        <div class="stat"><div class="k">消費したチケット 合計</div><div class="v">-${tickets}</div></div>
+        <div class="mini">※ タグや期間で絞り込まれた合計です</div>`;
+    }
+    $('btnSpendThisMonth').addEventListener('click', ()=>{
+      const now=new Date(); const y=now.getFullYear(), m=now.getMonth();
+      const first = new Date(y, m, 1); const last  = new Date(y, m+1, 0);
+      $('spFrom').value = first.toISOString().slice(0,10);
+      $('spTo').value   = last.toISOString().slice(0,10);
+      renderAll();
+    });
+    $('btnSpendClearFilter').addEventListener('click', ()=>{
+      $('spFrom').value=''; $('spTo').value=''; renderAll();
+    });
+
+    // Overall
+    function renderOverall(g){
+      const box=$('overallStats');
+      let totalPulls=0, fiveCount=0;
+      for(const L of g.state.logs){ if(L.type==='pull') totalPulls+=(L.pulls||0); if(L.rarity==='★5') fiveCount++; }
+      let incStones=0, incTickets=0;
+      for(const I of g.state.incomeLogs){ incStones+=(I.stones||0); incTickets+=(I.tickets||0); }
+      let spStones=0, spTickets=0;
+      for(const S of g.state.spendLogs){ spStones+=(S.stones||0); spTickets+=(S.tickets||0); }
+      const rate=totalPulls? (fiveCount/totalPulls*100).toFixed(2):'—';
+      box.innerHTML=`
+        <div class="stat"><div class="k">累計 連数</div><div class="v">${totalPulls} 連</div></div>
+        <div class="stat"><div class="k">★5 個数</div><div class="v">${fiveCount}</div></div>
+        <div class="stat"><div class="k">観測★5率</div><div class="v">${rate}%</div></div>
+        <div class="stat"><div class="k">累計 入手通貨</div><div class="v">+${incStones}</div></div>
+        <div class="stat"><div class="k">累計 入手チケット</div><div class="v">+${incTickets}</div></div>
+        <div class="stat"><div class="k">累計 消費通貨</div><div class="v">-${spStones}</div></div>
+        <div class="stat"><div class="k">累計 消費チケット</div><div class="v">-${spTickets}</div></div>`;
+    }
+
+    // image compress
+    function readAndCompressImage(file,maxW=1000,quality=0.85){
+      return new Promise((resolve,reject)=>{
+        const reader=new FileReader();
+        reader.onload=(ev)=>{
+          const img=new Image();
+          img.onload=()=>{
+            const scale=Math.min(1,maxW/img.width);
+            const w=Math.round(img.width*scale), h=Math.round(img.height*scale);
+            const canvas=document.createElement('canvas'); canvas.width=w; canvas.height=h;
+            const ctx=canvas.getContext('2d'); ctx.drawImage(img,0,0,w,h);
+            resolve(canvas.toDataURL('image/jpeg',quality));
+          };
+          img.onerror=reject; img.src=ev.target.result;
+        };
+        reader.onerror=reject; reader.readAsDataURL(file);
+      });
+    }
+
+    // Export/Import all
+    $('exportAll').addEventListener('click',()=>{
+      const blob=new Blob([JSON.stringify(app,null,2)],{type:'application/json'});
+      const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='pity-multi-log-pro-logres-tabs-v3-export.json'; a.click(); URL.revokeObjectURL(a.href);
+    });
+    $('importAllBtn').addEventListener('click', async ()=>{
+      const f=$('importAllFile').files&&$('importAllFile').files[0];
+      if(!f) return alert('JSONファイルを選択してください');
+      try{
+        const obj=JSON.parse(await f.text());
+        if(!obj||!Array.isArray(obj.games)) throw new Error('形式が違います');
+        app=obj; if(!app.activeId&&app.games.length) app.activeId=app.games[0].id;
+        saveApp(); renderAll();
+      }catch(e){ alert('読み込み失敗: '+e.message); }
+    });
+
+    // Export/Import one game
+    $('exportGame').addEventListener('click',()=>{
+      const g=activeGame(); if(!g) return;
+      const blob=new Blob([JSON.stringify(g,null,2)],{type:'application/json'});
+      const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+      const safe=g.name.replace(/[^\w\u3000-\u9FFF_-]/g,'_');
+      a.download=`pity-game-${safe}.json`; a.click(); URL.revokeObjectURL(a.href);
+    });
+    $('importGameBtn').addEventListener('click', async ()=>{
+      const f=$('importGameFile').files&&$('importGameFile').files[0];
+      if(!f) return alert('JSONファイルを選択してください');
+      try{
+        const obj=JSON.parse(await f.text());
+        if(!obj||!obj.id||!obj.config||!obj.state) throw new Error('ゲームデータの形式が違います');
+        obj.id='g'+Math.random().toString(36).slice(2,9);
+        app.games.push(obj); app.activeId=obj.id; saveApp(); renderAll();
+      }catch(e){ alert('読み込み失敗: '+e.message); }
+    });
+
+    // Add game
+    $('addGame').addEventListener('click',()=>{
+      const name=($('newGameName').value||'').trim();
+      const p=presets[$('newPreset').value]||presets.custom;
+      const g=mkGame(name||p.name,p.cfg);
+      app.games.push(g); app.activeId=g.id; $('newGameName').value='';
+      saveApp(); renderAll();
+    });
+
+    // Lightbox
+    function showLightbox(src){ const lb=$('lightbox'); const img=document.getElementById('lightboxImg'); img.src=src; lb.style.display='flex'; }
+    $('lightbox').addEventListener('click',(e)=>{ if(e.target.id==='lightbox'||e.target.id==='lightboxImg'){ $('lightbox').style.display='none'; } });
+  </script>
+</body>
+</html>
