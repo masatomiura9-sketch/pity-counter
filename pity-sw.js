@@ -17,6 +17,6 @@ self.addEventListener('fetch', e=>{
       const copy = res.clone();
       caches.open(CACHE).then(c=>c.put(e.request, copy));
       return res;
-    }).catch(()=>caches.match('./index_mobile_v5.html')))
+    }).catch(()=>caches.match('./index.html')))
   );
 });
