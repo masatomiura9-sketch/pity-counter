@@ -1,8 +1,10 @@
-const CACHE = 'pity-v5';
+const CACHE = 'pity-v5-2';            // ← 名前を変える
 const ASSETS = [
-  './index_mobile_v5.html',
-  './pity-manifest.webmanifest'
+  '/pity-counter/index.html',         // ← こちらも絶対パスに
+  '/pity-counter/pity-manifest.webmanifest'
 ];
+// 残りのコードはそのままでOK（404時のフォールバックは index.html を返す）
+
 self.addEventListener('install', e=>{
   e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS)).then(()=>self.skipWaiting()));
 });
